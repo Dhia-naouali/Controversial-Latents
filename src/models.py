@@ -54,14 +54,14 @@ class Backbone(nn.Module):
 
 
 class Head(nn.Module):
-    def __init__(self, in_dim, hidden_dim=512, out_dim=128):
+    def __init__(self, in_dim, hidden_dim=512, proj_dim=128):
         super().__init__()
         self.mlp = nn.Sequential(
             nn.Linear(in_dim, hidden_dim, bias=False),
             nn.LayerNorm(hidden_dim),
             nn.GELU(),
-            nn.Linear(hidden_dim, out_dim, bias=False),
-            nn.LayerNorm(out_dim, affine=False)
+            nn.Linear(hidden_dim, proj_dim, bias=False),
+            nn.LayerNorm(proj_dim, affine=False)
         )
 
     def forward(self, x):
@@ -72,13 +72,13 @@ class SimCLRModel(nn.Module):
     def __init__(
         self, 
         model_name="resnet50",
-        out_dim=128,
+        proj_dim=128,
         hidden_dim=512,
         layer_name="layer4",
     ):
         super().__init__()
         self.backbone = Backbone(model_name, layer_name)
-        self.head = Head(self.backbone.feat_dim, hidden_dim, out_dim)
+        self.head = Head(self.backbone.feat_dim, hidden_dim, proj_dim)
 
     def forward(self, x):
         return self.head(
