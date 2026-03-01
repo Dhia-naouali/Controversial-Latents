@@ -6,8 +6,7 @@ import trochvision.transforms as T
 from torch.utils.data import Dataset
 from PIL import Image
 
-MEANs = (0.485, 0.456, 0.406)
-STDs  = (0.229, 0.224, 0.225)
+from .utils import MEANs, STDs
 
 def default_transform(img_size=224):
     return T.Compose([

@@ -3,18 +3,13 @@ from torch import nn
 import torch.nn.functional as F
 
 import timm
-from omegaconf import DictConfig
 from transformers import AutoModel, CLIPModel
 
-
-IN_MEANs = (0.485, 0.456, 0.406)
-IN_STDs  = (0.229, 0.224, 0.225)
-
-CLIP_MEANs = (0.48145466, 0.4578275,  0.40821073)
-CLIP_STDs  = (0.26862954, 0.26130258, 0.27577711)
+from .utils import MEANs as IN_MEANs, STDs as IN_STDs, CLIP_MEANs, CLIP_STDs
 
 
-
+def in_to_clip_norm(x):
+    return x
 
 
 class BaseExtractor(nn.Module):
@@ -142,3 +137,16 @@ def build_extractor(config):
         raise ValueError(f"unknown ensemble member: {child_name}")
 
     return model.cuda()
+
+
+
+def build_all_extractors():
+    return {
+        mn: m.eval().cuda() for mn, m in 
+        {
+            "dino": Dino(),
+            "ijepa": IJEPA(),
+            "clip": CLIP(),
+            "classifier": Classifier()
+        }.items()
+    }

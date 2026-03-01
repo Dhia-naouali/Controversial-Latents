@@ -2,13 +2,8 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from omegaconf import DictConfig
-
 from diffusers import FluxPipeline
-
-
-MEANs = (0.485, 0.456, 0.406)
-STDs  = (0.229, 0.224, 0.225)
+from .utils import MEANs, STDs
 
 class FluxWrapper(nn.Module):
     def __init__(
