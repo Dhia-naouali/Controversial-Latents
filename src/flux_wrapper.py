@@ -117,11 +117,8 @@ class FluxWrapper(nn.Module):
         H, W = z.shape[2:]
 
         N = (H//2)*(W//2)
-        # if getattr(getattr(self.scheduler, "config", None), "use_dynamic_shifting", False):
         mu = self._calculate_shift(N)
         self.scheduler.set_timesteps(self.decode_steps, device="cuda:0", mu=mu)
-        # else:
-        #     self.scheduler.set_timesteps(self.decode_steps, device)
         
         timesteps = self.scheduler.timesteps
 
@@ -167,6 +164,15 @@ class FluxWrapper(nn.Module):
         images = (images.clamp(-1., 1.) + 1) / 2.
         images = (images - self.means.cuda()) / self.stds.cuda()
         return images, latents_ste
+
+
+    def clamp_latents(self, z):
+        if self.optimize_z:
+            z.data.clamp_(-self.z_clamp, self.z_clamp)
+
+    def _clamp_norm_vae(self, images):
+            images = (images.clamp(-1., 1.) + 1.) / 2.
+            return (images - self.means) / self.stds
 
     @staticmethod
     def _compute_shift(
