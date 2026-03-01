@@ -6,7 +6,7 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from .models import SimCLR
+from .models import SimCLRModel
 from .data import (
     PositiveImagesDataset,
     NegativeImageDataset,
@@ -50,7 +50,7 @@ def train_contrastive(
         drop_last=True
     )
 
-    model = SimCLR(
+    model = SimCLRModel(
         backbone,
         proj_dim,
         hidden_dim,

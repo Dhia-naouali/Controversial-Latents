@@ -22,7 +22,7 @@ class BaseExtractor(nn.Module):
     feat_dim: int
 
     def forward(self, x):
-        feats = self._encode(x):
+        feats = self._encode(x)
         return F.normalize(feats, dim=1)
     
     def _encode(self, x):

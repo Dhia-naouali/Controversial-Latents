@@ -2,7 +2,7 @@ import random
 from pathlib import Path
 
 import torch
-import trochvision.transforms as T
+import torchvision.transforms as T
 from torch.utils.data import Dataset
 from PIL import Image
 

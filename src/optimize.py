@@ -15,7 +15,7 @@ from .losses import (
     compute_mpcd
 )
 from .extractors import build_all_extractors
-from .utils import MEANs, STDs, denormalize, save_image_grid, imagenet_prompts
+from .utils import MEANs, STDs, imagenet_prompts # denormalize, save_image_grid,
 
 STATS = (
     torch.tensor(MEANs).cuda().view(1, 3, 1, 1),
@@ -42,10 +42,10 @@ def _normalize_grads(x):
 def _log_images(run, images, step, mode_name, save_every, out_dir):
     ...
 
-def _log_comps(...):
+def _log_comps():
     ...
 
-def _extract_config_for_optim(config, name)
+def _extract_config_for_optim(config, name):
     b, steps = config.generation.batch_size, config.generation.steps
     lr = config.generation.lr
     lr_min = lr * config.generation.lr_min_ratio
