@@ -5,7 +5,13 @@ import torch.nn.functional as F
 import timm
 from transformers import AutoModel, CLIPModel
 
-from .utils import MEANs as IN_MEANs, STDs as IN_STDs, CLIP_MEANs, CLIP_STDs
+from .utils import (
+    MEANs as IN_MEANs, 
+    STDs as IN_STDs, 
+    CLIP_MEANs, 
+    CLIP_STDs,
+    freeze
+)
 
 
 def in_to_clip_norm(x):
@@ -28,8 +34,7 @@ class Dino(BaseExtractor):
 
     def __init__(self, model_id="facebook/dinov2-base"):
         self.model = AutoModel.from_pretrained(model_id).eval()
-        for p in self.model.parameters():
-            p.requires_grad_(False)
+        freeze(self.model)
 
     def _encode(self, x):
         return self.model(x).last_hidden_state[:, 0]
@@ -40,8 +45,8 @@ class IJEPA(BaseExtractor):
     def __init__(self, model_id="facebook/ijepa_vith14_1k"):
         super().__init__()
         self.model = AutoModel.from_pretrained(model_id).eval()
-        for p in self.model.parameters():
-            p.requires_grad_(False)
+        freeze(self.model)
+
 
     def _encode(self, x):
         return self.model(x).last_hidden_state[:, 1:].mean(dim=1)
@@ -66,8 +71,8 @@ class Classifier(BaseExtractor):
     def __init__(self, model_name="resnet50"):
         super().__init__()
         self.model = timm.create_model(model_name, pretrained=True, num_classes=1000).eval()
-        for p in self.model.parameters():
-            p.requires_grad_(False)
+        freeze(self.model)
+
         
     def forward(self, x):
         return self.model(x)

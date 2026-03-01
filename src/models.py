@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 import timm
 
+from .utils import freeze
 
 class Backbone(nn.Module):
     def __init__(
@@ -15,8 +16,7 @@ class Backbone(nn.Module):
         self.layer_name = layer_name
 
         self._backbone = timm.create_model(model_name, pretrained=True, num_classes=0).eval()
-        for p in self._backbone.parameters():
-            p.requires_grad_(False)
+        freeze(self._backbone)
 
         self._feats = None
         self._hook_handle = self._register_hook()

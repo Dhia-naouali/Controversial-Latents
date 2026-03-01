@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 
 from diffusers import FluxPipeline
-from .utils import MEANs, STDs
+from .utils import MEANs, STDs, freeze
 
 class FluxWrapper(nn.Module):
     def __init__(
@@ -47,8 +47,7 @@ class FluxWrapper(nn.Module):
             self.vae, self.transformer, self.clip_encoder, self.t5_encoder
         ]:
             module.eval()
-            for p in module.parameters():
-                p.requires_grad_(False)
+            freeze(module)
 
         del pipe
         torch.cuda.empty_cache()

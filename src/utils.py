@@ -12,5 +12,4 @@ def freeze(module):
         p.requires_grad_(False)
 
 
-
 # temp_device_contex
