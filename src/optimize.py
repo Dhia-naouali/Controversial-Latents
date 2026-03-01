@@ -14,7 +14,7 @@ from .losses import (
     annealed_ce_loss, 
     compute_mpcd
 )
-
+from .extractors import build_all_extractors
 from .utils import MEANs, STDs, denormalize, save_image_grid, imagenet_prompts
 
 STATS = (
@@ -208,4 +208,36 @@ def _optimize_flux(config, extractor, flux, run):
     return images
 
 
+@torch.no_grad()
+def cross_evaluate(images, run=None):
+    results = {}
+    for extractor_name, extractor in build_all_extractors().items():
+        feats = extractor(images.cuda())
+        if extractor_name == "classifier":
+            feats = F.softmax(feats, dim=1)
+        mpcd = compute_mpcd(feats)
+        results[extractor_name] = mpcd
+        # if run is not None:
+        #     ...
+
+    return results
         
+def optimize_images(config, extractor, run=None, generator=None):
+    mode = config.mode.name
+
+    if mode == "pixels_ensemble":
+        images = _optimize_pixels_ensemble(config, extractor, run=run)
+    elif mode == "pixels_clip":
+        images = _optimize_pixels_clip(config, extractor, run=run)
+    elif mode == "pixels_kl":
+        images = _opitmizer_pixels_kl(config, extractor, run=run)
+    elif mode == "flux":
+        images = _optimize_flux(config, extractor, generator, run=run)
+    else:
+        raise ValueError(f"unkonwn mode: {mode}")
+    
+    cross_eval = {}
+    if config.cross_eval.enabled:
+        cross_eval = cross_evaluate(images, run=run)
+    
+    return images, cross_eval
