@@ -1,0 +1,4 @@
+name: dino
+model: "facebook/dinov2-base"
+dim: 768
+image_size: 224

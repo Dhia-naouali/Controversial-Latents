@@ -1,0 +1,4 @@
+name: classifier
+model: "resnet50"
+dim: 1000
+image_size: 224

@@ -1,0 +1,10 @@
+name: ensemble
+members:
+  - name: dino
+    model: "facebook/dinov2-base"
+    dim: 768
+    weight: 0.5
+  - name: ijepa
+    model: "facebook/ijepa_vith14_1k"
+    dim: 1280
+    weight: 0.5
