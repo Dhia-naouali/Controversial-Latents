@@ -1,4 +1,2 @@
 name: clip
 model: "openai/clip-vit-large-patch14"
-dim: 768
-image_size: 224

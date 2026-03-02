@@ -1,4 +1,2 @@
 name: ijepa
 model: "facebook/ijepa_vith14_1k"
-dim: 1280
-image_size: 224

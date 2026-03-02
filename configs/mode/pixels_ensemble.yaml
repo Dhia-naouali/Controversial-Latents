@@ -1,0 +1,10 @@
+name: pixels_ensemble
+
+optimization:
+  lr: 0.5
+  steps: 500
+  image_size: 224
+
+oracle:
+  extractors: ["dino", "ijepa"]
+  weights: [0.5, 0.5]

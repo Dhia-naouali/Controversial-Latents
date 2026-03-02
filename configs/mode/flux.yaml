@@ -1,0 +1,55 @@
+flux:
+  decode_steps: 4
+  guidance_scale: 3.5
+  lr_c: 0.02
+  lr_z: 0.07
+  model_id: black-forest-labs/FLUX.1-dev
+  optimize_c: true
+  optimize_z: true
+  seed_prompts:
+  - a photograph of an animal in nature
+  - an aerial landscape photograph
+  - a photograph of a mechanical object
+  - an abstract texture or pattern
+  - a photograph of food
+  - a portrait photograph
+  - a photograph of a building or structure
+  - an underwater photograph
+  - a photograph of a vehicle
+  - a photograph of a plant or flower
+  - a photograph of a crowd or city scene
+  - a photograph of weather or sky
+  - a photograph of sports or athletics
+  - a photograph of interior design
+  - a photograph of scientific equipment
+  - an artistic or stylized photograph
+
+
+  - a photograph of a weird animal in nature
+  - a photograph of a weird mechanical object
+  - a weird texture or pattern
+  - a photograph of weird food
+  - a weird portrait photograph
+  - a photograph of a weird building or structure
+  - a weird underwater creature
+  - a photograph of a weird vehicle
+  - a photograph of a weird plant or flower
+  - a photograph of a weird crowd or city scene
+  - a photograph of weird sports or athletics
+  - a photograph of weird interior design
+  - a photograph of weird scientific equipment
+  - a weird artistic or stylized photograph
+  - steve smith spaghetti
+  - a cat with goggles
+  z_clamp: 3.0
+name: flux
+oracle:
+  extractors:
+  - clip
+  weights:
+  - 1.0
+generation:
+  batch_size: 8
+  image_size: 224
+  lr: 0.07
+  steps: 300

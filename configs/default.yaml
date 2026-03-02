@@ -1,0 +1,76 @@
+data:
+  imagenet_val_dir: "data/imagenet_val/imagenet_val"
+  cka_matrix_path: "configs/cka_matrix.csv"
+  num_seed_images: 32
+
+optimization:
+  backbone: "resnet50"
+  layer_name: "layer4"
+  pretrained: true
+
+  batch_size: 32
+  steps: 200
+  lr: 0.05
+  lr_decay: 0.95
+
+  divergence_weight: 1.0
+  repulsion_weight: 0.1
+  tv_weight: 0.001
+
+  pixel_clip: true
+  log_every: 50
+  save_every: 100
+
+# # ── Stage 2: Contrastive Projector Training ───────────────────────────────────
+# contrastive:
+#   backbone: "resnet50"          # Must match optimization.backbone
+#   proj_dim: 128                 # Projector output dimension
+#   hidden_dim: 512               # Projector hidden layer dimension
+
+#   epochs: 30
+#   batch_size: 64
+#   lr: 1e-3
+#   weight_decay: 1e-4
+#   temperature: 0.07             # NT-Xent softmax temperature
+
+#   # Negative sampling
+#   neg_ratio: 8                  # Negatives per positive image
+#   num_views: 2                  # Augmentation views per image (SimCLR-style)
+
+#   # Augmentations (applied to both positives and negatives)
+#   augmentation:
+#     random_crop: true
+#     crop_size: 224
+#     random_flip: true
+#     color_jitter: true
+#     jitter_strength: 0.5
+#     gaussian_blur: false
+
+#   # Training schedule
+#   lr_schedule: "cosine"         # "cosine" or "step"
+#   warmup_epochs: 3
+
+# # ── Stage 3: Retrieval ────────────────────────────────────────────────────────
+# retrieval:
+#   top_k: 50                     # Number of images to retrieve
+#   batch_size: 256               # Embedding batch size for ImageNet-Val
+#   num_workers: 8
+
+#   # Retrieval strategies (both used, then union + rerank)
+#   use_centroid: true            # Query with mean of all optimized embeddings
+#   use_ensemble: true            # Query with mean cosine sim over all optimized images
+#   rerank: true                  # Rerank the union of both results by ensemble score
+
+# # ── CKA Analysis ─────────────────────────────────────────────────────────────
+# cka:
+#   divergence_threshold: 0.5     # Pairs with CKA < this are "maximally divergent"
+#   top_divergent_pairs: 10       # How many model pairs to report
+
+# # ── Output ────────────────────────────────────────────────────────────────────
+output:
+  dir: "outputs/"
+  # save_optimized_pt: true
+  # save_optimized_png: true
+  # save_retrieval_json: true
+  # save_plots: true
+  # dpi: 150

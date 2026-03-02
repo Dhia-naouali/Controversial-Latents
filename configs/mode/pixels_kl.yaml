@@ -1,0 +1,16 @@
+name: pixels_kl
+
+optimization:
+  lr: 0.3
+  steps: 800
+  init: noise
+  image_size: 224
+
+oracle:
+  extractors: ["classifier"]
+  weights: [1.0]
+
+kl:
+  backbone: "resnet50"
+  target_anneal_frac: 0.3
+  target_weight: 1.0

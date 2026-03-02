@@ -1,0 +1,10 @@
+name: pixels_clip
+
+optimization:
+  lr: 0.4
+  steps: 500
+  image_size: 224
+
+oracle:
+  extractors: ["clip"]
+  weights: [1.0]
