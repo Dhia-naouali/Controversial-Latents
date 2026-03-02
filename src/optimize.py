@@ -1,4 +1,7 @@
+import wandb
 import math
+import pandas as pd
+from IPython import display
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -15,12 +18,16 @@ from .losses import (
     compute_mpcd
 )
 from .extractors import build_all_extractors
-from .utils import MEANs, STDs, imagenet_prompts # denormalize, save_image_grid,
+from .utils import MEANs, STDs, imagenet_prompts , save_images
 
 STATS = (
     torch.tensor(MEANs).cuda().view(1, 3, 1, 1),
     torch.tensor(STDs).cuda().view(1, 3, 1, 1)
 )
+
+def unnormalize(images):
+    m, s = STATS
+    return (images.cuda() * s + m).clamp(0., 1.)
 
 def _pixel_bounds():
     mean, std = STATS
@@ -31,6 +38,7 @@ def _noise_init(b, c, h, w):
     low, high = _pixel_bounds()
     return torch.randn(b, c, h, w).cuda().mul(.5).clamp(low, high).detach().requires_grad_(True)
 
+
 def _normalize_grads(x):
     if x.grad is None:
         return 
@@ -39,20 +47,42 @@ def _normalize_grads(x):
     norms = x.grad.view(b, -1).norm(dim=1).clamp(min=1e-8)
     x.grad = x.grad / norms.view(b, 1, 1, 1)
 
+
 def _log_images(run, name, images, step, config):
     save_every = config.save_every
-    if step % save_every:
+    if step % save_every and step+1:
         return
 
     out_dir = config.out_dir
-    run.log(...)
+    images = unnormalize(
+        images
+    ).detach().permute(0, 2, 3, 1).cpu().numpy()
+    
+    if out_dir:
+        image_file = f"step_{step}.png" if step+1 else "final_images.png"
+        save_images(images, out_dir / image_file, title=f"{name} optimized images")
 
-def _log_comps(run, name, comps, step, config):
+
+    if run is None:
+        return 
+
+    run.log({
+        f"images_optimization/{name}/images": [
+            wandb.Image(images[i]) for i in range(len(images))
+        ]
+    }, step=step)
+
+
+def _log_comps(run, name, infos, step, config):
     log_every = config.log_every
-    if step % log_every:
+    if run is None or step % log_every:
         return
     
-    run.log(...)
+    infos = {
+        f"{name}/{k}": v for k, v in infos.items()
+    }
+    run.log(infos, step=step)
+
 
 
 def _extract_config_for_optim(config, name):
@@ -71,7 +101,8 @@ def _extract_config_for_optim(config, name):
     return SimpleNamespace(**{
         "b": b, "steps": steps, "lr": lr, "lr_min": lr_min, 
         "h": h, "w": w, "repulsion_w": repulsion_w, 
-        "log_every": log_every, "save_every": save_every
+        "log_every": log_every, "save_every": save_every,
+        "out_dir": out_dir
     })
     
 
@@ -102,6 +133,8 @@ def _optimize_pixels_ensemble(config, extractor, run):
         _log_comps(run, name, comps, step, c)
         _log_images(run, name, images, step, c)
 
+
+    _log_images(run, name, images, -1, c)
     return images.detach().cpu()
 
 
@@ -128,6 +161,8 @@ def _optimize_pixels_clip(config, extractor, run):
         _log_comps(run, name, comps, step, c)
         _log_images(run, name, images, step, c)
 
+
+    _log_images(run, name, images, -1, c)
     return images.detach().cpu()
 
 
@@ -169,6 +204,8 @@ def _opitmizer_pixels_kl(config, extractor, run):
         _log_comps(run, name, comps, step, c)
         _log_images(run, name, images, step, c)
 
+
+    _log_images(run, name, images, -1, c)
     return images.detach().cpu()
 
 
@@ -226,11 +263,13 @@ def _optimize_flux(config, extractor, flux, run):
         pb.set_postfix({f"{name}/loss": loss.item()})
 
         _log_comps(run, name, comps, step, c)
-        _log_images(run, name, images, step, c)
+        _log_images(run, name, images_norm, step, c)
 
     with torch.no_grad():
         images = flux.decode(z, t5_embeds, clip_embeds)[0].detach().cpu()
     
+
+    _log_images(run, name, images, -1, c)
     return images
 
 
@@ -245,7 +284,8 @@ def cross_evaluate(images):
         results[extractor_name] = mpcd
 
     return results
-        
+    # return pd.DataFrame.from_dict(results)
+
 def optimize_images(config, extractor, run=None, generator=None):
     mode = config.mode.name
 
@@ -262,7 +302,8 @@ def optimize_images(config, extractor, run=None, generator=None):
     
     cross_eval = {}
     if config.cross_eval.enabled:
-        cross_eval = cross_evaluate(images, run=run)
+        cross_eval = cross_evaluate(images)
+        # display(cross_eval.round(4))
+        # cross_eval.to_csv(index=False)
     
-        # plot / save matrix
     return images, cross_eval

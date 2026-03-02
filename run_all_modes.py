@@ -65,7 +65,6 @@ def run_mode(mode_name, extractor_name, group=None):
         "mode": mode_name, "images": images, "cross_eval": cross_eval
     }
 
-
 def cross_eval_matrix(_):
     return {}
 
@@ -81,11 +80,11 @@ def main():
         result = run_mode(mode_name, extractor_name, None)
         results.append(result)
         
-    if len(results) > 1:
-        val_matrix = cross_eval_matrix(results)
-        df = pd.DataFrame(val_matrix).T
-        df = df.round(4)
-        print(df)
+    # if len(results) > 1:
+    #     val_matrix = cross_eval_matrix(results)
+    #     df = pd.DataFrame(val_matrix).T
+    #     df = df.round(4)
+    #     print(df)
         
         # for mode_name, extractor_score in val_matrix.items():
 
