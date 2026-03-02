@@ -31,8 +31,8 @@ class BaseExtractor(nn.Module):
 
 class Dino(BaseExtractor):
     feat_dim = 768
-
     def __init__(self, model_id="facebook/dinov2-base"):
+        super().__init__()
         self.model = AutoModel.from_pretrained(model_id).eval()
         freeze(self.model)
 
@@ -58,9 +58,8 @@ class CLIP(BaseExtractor):
     def __init__(self, model_id="openai/clip-vit-large-patch14"):
         super().__init__()
         self.model = CLIPModel.from_pretrained(model_id).eval()
-        for p in self.model.parameters():
-            p.requries_grad_(False)
-        
+        freeze(self.model)
+
     def _encode(self, x):
         x = in_to_clip_norm(x)
         return self.model.vision_model(x).pooler_output
@@ -83,31 +82,19 @@ class Classifier(BaseExtractor):
 
 class Ensemble(BaseExtractor):
     def __init__(
-            self, models, per_model_loss=True
+            self, models
     ):
         super().__init__()
         self.models = nn.ModuleList([m[1] for m in models])
 
         self.names = [m[0] for m in models]
         self.weights = [m[2] for m in models]
-
-        self.per_model_loss = per_model_loss
         self.feat_dim = sum(m.feat_dim for m in self.models)
 
     def forward(self, x):
-        results = {
+        return {
             name: model(x) for name, model in zip(self.names, self.models)
         }
-
-        if self.per_model_loss:
-            return results
-        
-        preds = torch.cat(
-            [results[name] * w for name, w in zip(self.names, self.weights)], 
-            dim=1
-        )
-
-        return F.normalize(preds, dim=1)
     
 
 
@@ -124,7 +111,7 @@ def build_extractor(config):
         model = Classifier(model_name=config.get("model", "resnet50"))
     elif name == "ensemble":
         models = []
-        for m in config.models:
+        for m in config.members:
             child_config = m
             child_name = child_config.name
             w = child_config.get("weight", 1.0)
@@ -137,7 +124,7 @@ def build_extractor(config):
             else:
                 raise ValueError(f"unknown ensemble member: {child_name}")
             models.append((child_name, child, w))
-        model = Ensemble(models, per_extractor_loss=True)
+        model = Ensemble(models)
     else:
         raise ValueError(f"unknown ensemble member: {child_name}")
 

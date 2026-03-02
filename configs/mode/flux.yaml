@@ -1,11 +1,30 @@
+name: flux
+oracle:
+  extractors:
+  - clip
+  weights:
+  - 1.0
+
+
+optimization:
+  batch_size: 8
+  image_size: 224
+  lr: 0.07
+  steps: 300
+
 flux:
-  decode_steps: 4
-  guidance_scale: 3.5
-  lr_c: 0.02
-  lr_z: 0.07
   model_id: black-forest-labs/FLUX.1-dev
+
   optimize_c: true
   optimize_z: true
+  lr_c: 0.02
+  lr_z: 0.07
+  z_clamp: 3.0
+
+  decode_steps: 32
+  guidance_scale: 3.5
+
+  latents_seed: 12
   seed_prompts:
   - a photograph of an animal in nature
   - an aerial landscape photograph
@@ -41,15 +60,3 @@ flux:
   - a weird artistic or stylized photograph
   - steve smith spaghetti
   - a cat with goggles
-  z_clamp: 3.0
-name: flux
-oracle:
-  extractors:
-  - clip
-  weights:
-  - 1.0
-generation:
-  batch_size: 8
-  image_size: 224
-  lr: 0.07
-  steps: 300

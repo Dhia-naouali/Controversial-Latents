@@ -11,6 +11,5 @@ oracle:
   weights: [1.0]
 
 kl:
-  backbone: "resnet50"
   target_anneal_frac: 0.3
   target_weight: 1.0

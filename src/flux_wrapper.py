@@ -11,7 +11,7 @@ class FluxWrapper(nn.Module):
             model_id="black-forest-labs/FLUX.1-dev", 
             decode_steps=32, 
             guidance_scale=3.5, 
-            image_size=256, 
+            image_size=224, 
             z_clamp=3.,
             optimize_z=True,
             optimize_c=True,
@@ -215,13 +215,14 @@ class FluxWrapper(nn.Module):
 
 
 def build_generator(config):
+    image_size = config.optimization.get("image_size", 224)
     config = config.flux
     return FluxWrapper(
         model_id=config.model_id,
         decode_steps=config.decode_steps,
         guidance_scale=config.guidance_scale,
-        image_size=config.synthesis.get("image_size", 256),
-        z_xlamp=config.z_clamp,
+        image_size=image_size,
+        z_clamp=config.z_clamp,
         optimize_z=config.optimize_z,
         optimize_c=config.optimize_c,
         seed_prompts=list(config.seed_prompts),

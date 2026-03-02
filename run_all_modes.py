@@ -1,6 +1,8 @@
-import os, sys
+import os
+import sys
 import json
 import argparse
+import pandas as pd
 from pathlib import Path
 from datetime import datetime
 
@@ -22,14 +24,12 @@ HF_TOKEN = os.environ["HF_TOKEN"]
 login(token=HF_TOKEN)
 
 
-MODES = [
-    ("pixels_ensemble",  "ensemble"),
-    ("pixels_clip",      "clip"),
-    ("pixels_kl",        "classifier"),
-    ("flux",            "dino"),
-]
-
-
+MODES2EXT = {
+    "pixels_ensemble": "ensemble",
+    "pixels_clip": "clip",
+    "pixels_kl": "classifier",
+    "flux": "dino",
+}
 
 
 def run_mode(mode_name, extractor_name, group=None):
@@ -42,13 +42,14 @@ def run_mode(mode_name, extractor_name, group=None):
             ]
         )
 
-    run = wandb.init(
-        "controversial-latents", 
-        # group=run_group, 
-        name=mode_name, 
-        config=OmegaConf.to_container(config, resolve=True),
-        reinit=True
-    )
+    # run = wandb.init(
+    #     project="controversial-latents", 
+    #     # group=run_group, 
+    #     name=mode_name, 
+    #     config=OmegaConf.to_container(config, resolve=True),
+    #     reinit=True
+    # )
+    run = None
 
     extractor = build_extractor(config.extractor)
     generator = build_generator(config.mode) if mode_name == "flux" else None
@@ -65,6 +66,9 @@ def run_mode(mode_name, extractor_name, group=None):
     }
 
 
+def cross_eval_matrix(_):
+    return {}
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -73,10 +77,19 @@ def main():
     Path(f"outputs/{run_group}").mkdir(parents=True, exist_ok=True)
     results = []
 
-    for mode_name, extractor_name in MODES:
+    for mode_name, extractor_name in MODES2EXT.items():
         result = run_mode(mode_name, extractor_name, None)
         results.append(result)
         
+    if len(results) > 1:
+        val_matrix = cross_eval_matrix(results)
+        df = pd.DataFrame(val_matrix).T
+        df = df.round(4)
+        print(df)
+        
+        # for mode_name, extractor_score in val_matrix.items():
+
+
 
 if __name__ == "__main__":
     main()

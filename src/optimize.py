@@ -46,13 +46,13 @@ def _log_comps():
     ...
 
 def _extract_config_for_optim(config, name):
-    b, steps = config.generation.batch_size, config.generation.steps
-    lr = config.generation.lr
-    lr_min = lr * config.generation.lr_min_ratio
-    h = w = config.mode.generation.image_size
-    repulsion_w = config.generation.repulsion_weight
-    log_every = config.generation.log_every
-    save_every = config.generation.save_every
+    b, steps = config.optimization.batch_size, config.optimization.steps
+    lr = config.optimization.lr
+    lr_min = lr * config.optimization.lr_min_ratio
+    h = w = config.mode.optimization.get("image_size", 224)
+    repulsion_w = config.optimization.repulsion_weight
+    log_every = config.optimization.log_every
+    save_every = config.optimization.save_every
 
     out_dir = Path(config.output.dir) / name if config.output.dir else None
     if out_dir:
@@ -70,7 +70,8 @@ def _optimize_pixels_ensemble(config, extractor, run):
     c = _extract_config_for_optim(config, name)
     weights = {
         m.name: m.weight for m in config.extractor.members
-    }
+    } if hasattr(config.extractor.members[0], "weight") else None
+
     images = _noise_init(c.b, 3, c.h, c.w)
     low, high = _pixel_bounds()
     optimizer = optim.Adam([images], lr=c.lr)
@@ -94,7 +95,7 @@ def _optimize_pixels_ensemble(config, extractor, run):
 def _optimize_pixels_clip(config, extractor, run):
     name = "picels_clip"
     c = _extract_config_for_optim(config, name)
-    images = _noise_init(c.b, 2, c.h, c.w)
+    images = _noise_init(c.b, 3, c.h, c.w)
     low, high = _pixel_bounds()
     optimizer = optim.Adam([images], lr=c.lr)
 
@@ -133,7 +134,7 @@ def _opitmizer_pixels_kl(config, extractor, run):
             targets, 
             step, 
             c.steps, 
-            kl_config.target_anneal_frad, 
+            kl_config.target_anneal_frac, 
             kl_config.target_weight
         )
         loss = kl_loss + ce_loss
@@ -159,7 +160,7 @@ def _optimize_flux(config, extractor, flux, run):
         imagenet_prompts[i % len(imagenet_prompts)] for i in range(c.b)
     ]
 
-    z, t5_embeds, clip_embeds = flux.init_latents(c.b, seed=config.data.seed, prompts=prompts)
+    z, t5_embeds, clip_embeds = flux.init_latents(c.b, seed=flux_config.latents_seed, prompts=prompts)
     param_groups = []
     if flux_config.optimize_z:
         param_groups.append({

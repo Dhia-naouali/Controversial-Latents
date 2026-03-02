@@ -44,7 +44,7 @@ def kl_divergence_loss(logits):
     q = probs.unsqueeze(1).expand(b, b, -1)
     lq = log_probs.unsqueeze(1).expand(b, b, -1)
 
-    kl = .5 * ((p * (lp-lq)) + (q * (lq-lp)).sum(dim=-1))
+    kl = .5 * ((p * (lp-lq)) + (q * (lq-lp))).sum(dim=-1)
     mask = ~torch.eye(b, dtype=torch.bool).cuda()
     mean_kl = kl[mask].mean()
     
