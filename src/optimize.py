@@ -39,11 +39,21 @@ def _normalize_grads(x):
     norms = x.grad.view(b, -1).norm(dim=1).clamp(min=1e-8)
     x.grad = x.grad / norms.view(b, 1, 1, 1)
 
-def _log_images(run, images, step, mode_name, save_every, out_dir):
-    ...
+def _log_images(run, name, images, step, config):
+    save_every = config.save_every
+    if step % save_every:
+        return
 
-def _log_comps():
-    ...
+    out_dir = config.out_dir
+    run.log(...)
+
+def _log_comps(run, name, comps, step, config):
+    log_every = config.log_every
+    if step % log_every:
+        return
+    
+    run.log(...)
+
 
 def _extract_config_for_optim(config, name):
     b, steps = config.optimization.batch_size, config.optimization.steps
@@ -75,7 +85,8 @@ def _optimize_pixels_ensemble(config, extractor, run):
     images = _noise_init(c.b, 3, c.h, c.w)
     low, high = _pixel_bounds()
     optimizer = optim.Adam([images], lr=c.lr)
-    
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=c.steps, eta_min=c.lr_min)
+
     for step in (pb := tqdm(range(c.steps))):
         optimizer.zero_grad 
         feats = extractor(images) # dict
@@ -83,12 +94,14 @@ def _optimize_pixels_ensemble(config, extractor, run):
         loss.backward()
         _normalize_grads(images)
         optimizer.step()
-        # scheduler.step()
+        scheduler.step()
         with torch.no_grad():
             images.data.clamp_(low, high)
-
-    # log comps to run
+        pb.set_postfix({f"{name}/loss": loss.item()})
         
+        _log_comps(run, name, comps, step, c)
+        _log_images(run, name, images, step, c)
+
     return images.detach().cpu()
 
 
@@ -98,6 +111,7 @@ def _optimize_pixels_clip(config, extractor, run):
     images = _noise_init(c.b, 3, c.h, c.w)
     low, high = _pixel_bounds()
     optimizer = optim.Adam([images], lr=c.lr)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=c.steps, eta_min=c.lr_min)
 
     for step in (pb := tqdm(range(c.steps))):
         optimizer.zero_grad()
@@ -106,11 +120,14 @@ def _optimize_pixels_clip(config, extractor, run):
         loss.backward()
         _normalize_grads(images)
         optimizer.step()
-        # scheduler.step()
+        scheduler.step()
         with torch.no_grad():
             images.data.clamp_(low, high)
+        pb.set_postfix({f"{name}/loss": loss.item()})
+        
+        _log_comps(run, name, comps, step, c)
+        _log_images(run, name, images, step, c)
 
-    # logs to run
     return images.detach().cpu()
 
 
@@ -124,6 +141,7 @@ def _opitmizer_pixels_kl(config, extractor, run):
     images = _noise_init(c.b, 3, c.h, c.w)
     low, high = _pixel_bounds()
     optimizer = optim.Adam([images], lr=c.lr)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=c.steps, eta_min=c.lr_min)
 
     for step in (pb := tqdm(range(c.steps))):
         optimizer.zero_grad()
@@ -141,12 +159,16 @@ def _opitmizer_pixels_kl(config, extractor, run):
         loss.backward()
         _normalize_grads(images)
         optimizer.step()
-        # scheduler.step()
+        scheduler.step()
         with torch.no_grad():
             images.data.clamp_(low, high)
-        comps = {**kl_comps, "ce_w": ce_w, "total_loss": loss.item()}
 
-    # log to run
+        comps = {**kl_comps, "ce_w": ce_w, "total_loss": loss.item()}
+        pb.set_postfix({f"{name}/loss": loss.item()})
+
+        _log_comps(run, name, comps, step, c)
+        _log_images(run, name, images, step, c)
+
     return images.detach().cpu()
 
 
@@ -201,7 +223,10 @@ def _optimize_flux(config, extractor, flux, run):
         with torch.no_grad():
             flux.clamp_latents(z)
         
-        # log to run & decode images
+        pb.set_postfix({f"{name}/loss": loss.item()})
+
+        _log_comps(run, name, comps, step, c)
+        _log_images(run, name, images, step, c)
 
     with torch.no_grad():
         images = flux.decode(z, t5_embeds, clip_embeds)[0].detach().cpu()
@@ -210,7 +235,7 @@ def _optimize_flux(config, extractor, flux, run):
 
 
 @torch.no_grad()
-def cross_evaluate(images, run=None):
+def cross_evaluate(images):
     results = {}
     for extractor_name, extractor in build_all_extractors().items():
         feats = extractor(images.cuda())
@@ -218,8 +243,6 @@ def cross_evaluate(images, run=None):
             feats = F.softmax(feats, dim=1)
         mpcd = compute_mpcd(feats)
         results[extractor_name] = mpcd
-        # if run is not None:
-        #     ...
 
     return results
         
@@ -241,4 +264,5 @@ def optimize_images(config, extractor, run=None, generator=None):
     if config.cross_eval.enabled:
         cross_eval = cross_evaluate(images, run=run)
     
+        # plot / save matrix
     return images, cross_eval
