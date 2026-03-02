@@ -6,31 +6,20 @@ defaults:
 
 data:
   imagenet_val_dir: "data/imagenet/val"
-  cka_matrix_path: "configs/cka_matrix.csv"
   num_seed_images: 32
 
 optimization:
-  # backbone: "resnet50"
-  # layer_name: "layer4"
-  # pretrained: true
-
   batch_size: 32
-  steps: 20
+  steps: 200
   lr: 0.05
   lr_min_ratio: 0.1
 
-  # divergence_weight: 1.0
   repulsion_weight: 0.1
-  # tv_weight: 0.001
-
-  # pixel_clip: true
   log_every: 50
   save_every: 100
 
 output:
   dir: "outputs/"
-
-
 
 cross_eval:
   # extractors: ["dino", "ijepa", "clip", "classifier"]

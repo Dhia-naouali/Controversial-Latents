@@ -9,7 +9,7 @@ class FluxWrapper(nn.Module):
     def __init__(
             self, 
             model_id="black-forest-labs/FLUX.1-dev", 
-            decode_steps=32, 
+            decode_steps=24, 
             guidance_scale=3.5, 
             image_size=224, 
             z_clamp=3.,
