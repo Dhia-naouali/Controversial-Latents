@@ -178,13 +178,13 @@ def _optimize_flux(config, extractor, flux, run):
         optimizer.zero_grad()
         images_norm, latents = flux.decode(z, t5_embeds, clip_embeds)
 
-        with torch.amp.autocast(device_type="cuda", dtype=torch.bfloat):
+        with torch.amp.autocast(device_type="cuda", dtype=torch.bfloat16):
             scale, shift = flux.vae.config.scaling_factor, flux.vae.config.shift_factor
             scaled_latents = (latents / scale) + shift
-            images_grad = flux.vae_decode(scaled_latents, return_dict=False)[0]
+            images_grad = flux.vae.decode(scaled_latents, return_dict=False)[0]
             images_grad = flux._clamp_norm_vae(images_grad)
 
-        feats = flux(images_grad)
+        feats = extractor(images_grad)
         loss, comps = divergence_loss(feats, c.repulsion_w)
         loss.backward()
 
@@ -199,12 +199,12 @@ def _optimize_flux(config, extractor, flux, run):
             )
 
         with torch.no_grad():
-            flux.clamp_latents(z, t5_embeds, clip_embeds)
+            flux.clamp_latents(z)
         
         # log to run & decode images
 
     with torch.no_grad():
-        images, _ = flux.decode(z, t5_embeds, clip_embeds).detach().cpu()
+        images = flux.decode(z, t5_embeds, clip_embeds)[0].detach().cpu()
     
     return images
 

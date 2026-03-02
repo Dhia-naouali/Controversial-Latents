@@ -30,8 +30,8 @@ class FluxWrapper(nn.Module):
 
         self._load_model(model_id)
 
-        self.register_buffer("means", torch.tensor(MEANs).view(1, 3, 1, 1))
-        self.register_buffer("stds", torch.tensor(STDs).view(1, 3, 1, 1))
+        self.register_buffer("means", torch.tensor(MEANs).view(1, 3, 1, 1).cuda())
+        self.register_buffer("stds", torch.tensor(STDs).view(1, 3, 1, 1).cuda())
 
     def _load_model(self, model_id):
         pipe = FluxPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
@@ -57,7 +57,7 @@ class FluxWrapper(nn.Module):
         t5_tokens = self.t5_tokenizer(
             prompts, 
             padding="max_length", 
-            max_length=77, 
+            max_length=512, 
             truncation=True, 
             return_tensors="pt"
         ).input_ids.cuda()
@@ -68,7 +68,7 @@ class FluxWrapper(nn.Module):
         clip_tokens = self.clip_tokenizer(
             prompts, 
             padding="max_length", 
-            max_length=512, 
+            max_length=77, 
             truncation=True, 
             return_tensors="pt"
         ).input_ids.cuda()
@@ -117,7 +117,7 @@ class FluxWrapper(nn.Module):
         H, W = z.shape[2:]
 
         N = (H//2)*(W//2)
-        mu = self._calculate_shift(N)
+        mu = self._compute_shift(N)
         self.scheduler.set_timesteps(self.decode_steps, device="cuda:0", mu=mu)
         
         timesteps = self.scheduler.timesteps
@@ -127,7 +127,7 @@ class FluxWrapper(nn.Module):
         latents = (z * sigma0).detach().bfloat16()
         
         img_ids = self._prepare_image_ids(H, W)
-        txt_ids = torch.zeros(B, prompt_embeds.shape[1], 3).cuda()
+        txt_ids = torch.zeros(prompt_embeds.shape[1], 3).cuda()
 
         with torch.no_grad(), torch.amp.autocast(device_type="cuda", dtype=torch.bfloat16):
             for t_ in timesteps:
@@ -138,11 +138,11 @@ class FluxWrapper(nn.Module):
                     encoder_hidden_states=prompt_embeds,
                     pooled_projections=pooled_embeds,
                     txt_ids=txt_ids,
-                    img_ids=img_ids.unsqueeze(0).expand(B, -1, -1),
+                    img_ids=img_ids,
                     guidance=torch.full(
                         (B,), self.guidance_scale
                     ).cuda(),
-                    return_dics=False
+                    return_dict=False
                 )[0]
                 latents = self.scheduler.step(noise_pred, t_, latents, return_dict=False)[0]
 
@@ -158,7 +158,7 @@ class FluxWrapper(nn.Module):
 
 
 
-        with torch.no_grad, torch.amp.autocast(device_type="cuda", dtype=torch.bfloat16):
+        with torch.no_grad(), torch.amp.autocast(device_type="cuda", dtype=torch.bfloat16):
             images = self.vae.decode(latents_sc, return_dict=False)[0]
 
         images = (images.clamp(-1., 1.) + 1) / 2.

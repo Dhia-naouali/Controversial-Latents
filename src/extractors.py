@@ -13,9 +13,15 @@ from .utils import (
     freeze
 )
 
+IN_MEANs = torch.tensor(IN_MEANs).cuda().view(1, 3, 1, 1)
+IN_STDs = torch.tensor(IN_STDs).cuda().view(1, 3, 1, 1)
+CLIP_MEANs = torch.tensor(CLIP_MEANs).cuda().view(1, 3, 1, 1)
+CLIP_STDs = torch.tensor(CLIP_STDs).cuda().view(1, 3, 1, 1)
+
 
 def in_to_clip_norm(x):
-    return x
+    x = (x * IN_STDs + IN_MEANs).clamp(0., 1.)
+    return (x - CLIP_MEANs) / CLIP_STDs
 
 
 class BaseExtractor(nn.Module):

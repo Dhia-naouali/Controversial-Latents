@@ -97,6 +97,12 @@ def train_contrastive(
             scheduler.step()
             epoch_loss += loss.item()
 
+            if run is not None:
+                run.log({
+                    f"contrastive_training/nt_xent_loss": loss.item(),
+                    f"contrastive_training/lr": scheduler.get_last_lr()[0]
+                })
+
             pb.set_postfix(epoch=epoch, loss=f"{loss.item():.4f}", lr=f"{scheduler.get_last_lr()[0]:.4f}")
 
         epoch_loss /= len(loader)        
