@@ -5,7 +5,7 @@ defaults:
 
 
 data:
-  imagenet_val_dir: "data/imagenet/val"
+  images_dir: "data/imagenet/val"
   num_seed_images: 32
 
 optimization:

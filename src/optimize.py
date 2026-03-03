@@ -99,7 +99,7 @@ def _extract_config_for_optim(config, name):
         out_dir.mkdir(parents=True, exist_ok=True)
 
     return SimpleNamespace(**{
-        "b": b, "steps": steps, "lr": lr, "lr_min": lr_min, 
+        "b": b, "steps": steps, "lr": lr, "lr_min": lr_min,
         "h": h, "w": w, "repulsion_w": repulsion_w, 
         "log_every": log_every, "save_every": save_every,
         "out_dir": out_dir
@@ -119,7 +119,7 @@ def _optimize_pixels_ensemble(config, extractor, run):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=c.steps, eta_min=c.lr_min)
 
     for step in (pb := tqdm(range(c.steps))):
-        optimizer.zero_grad 
+        optimizer.zero_grad()
         feats = extractor(images) # dict
         loss, comps = ensemble_divergence_loss(feats, weights, c.repulsion_w)
         loss.backward()

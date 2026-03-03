@@ -34,7 +34,7 @@ def _extract_contrastive_training_config(config, run=None):
     )
 
 
-@hydra.main(config_path="configs", config_name="config"):
+@hydra.main(config_path="configs", config_name="config")
 def main(config):
     images_dir = config.data.images_dir
     out_dir = Path(config.output.dir)

@@ -6,8 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from .models import SimCLRModel
-from .data import PathDataset
+from .data import ImageDataset
 
 
 def embed_images(
@@ -16,7 +15,7 @@ def embed_images(
     batch_size, 
     num_workers
 ):
-    dataset = PathDataset(paths)
+    dataset = ImageDataset(paths)
     loader = DataLoader(
         dataset, 
         batch_size=batch_size, 
