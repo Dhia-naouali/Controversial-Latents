@@ -1,6 +1,7 @@
 from .flux_wrapper import build_generator
 from .optimize import optimize_images, cross_evaluate
 from .contrastive import train_contrastive
+from .retrieve import retrieve
 from .losses import (
     divergence_loss, 
     ensemble_divergence_loss,
