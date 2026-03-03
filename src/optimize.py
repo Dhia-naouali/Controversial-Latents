@@ -267,7 +267,6 @@ def _optimize_flux(config, extractor, flux, run):
 
     with torch.no_grad():
         images = flux.decode(z, t5_embeds, clip_embeds)[0].detach().cpu()
-    
 
     _log_images(run, name, images, -1, c)
     return images

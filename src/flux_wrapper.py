@@ -162,7 +162,7 @@ class FluxWrapper(nn.Module):
             images = self.vae.decode(latents_sc, return_dict=False)[0]
 
         images = (images.clamp(-1., 1.) + 1) / 2.
-        images = (images - self.means.cuda()) / self.stds.cuda()
+        images = (images - self.means) / self.stds
         return images, latents_ste
 
 
@@ -210,8 +210,6 @@ class FluxWrapper(nn.Module):
         x = latents.view(b, h//2, w//2, c, 2, 2)
         x = x.permute(0, 3, 1, 4, 2, 5)
         return x.reshape(b, c, h, w)
-    
-
 
 
 def build_generator(config):
