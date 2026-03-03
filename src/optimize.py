@@ -4,6 +4,7 @@ import pandas as pd
 from IPython import display
 from pathlib import Path
 from types import SimpleNamespace
+from functools import partial
 
 import torch
 from torch import optim
@@ -213,7 +214,16 @@ def _opitmizer_pixels_kl(config, extractor, run):
 def _optimize_flux(config, extractor, flux, run):
     name = "flux"
     c = _extract_config_for_optim(config, name)
+    weights = {
+        m.name: m.weight for m in config.extractor.members
+    } if hasattr(config.extractor.members[0], "weight") else None
+
     flux_config = config.mode.flux
+    print(config.extractor.name)
+    if config.extractor.name == "ensemble":
+        loss_func = partial(ensemble_divergence_loss, weights=weights)
+    else: 
+        loss_func = divergence_loss
 
     prompts = [
         imagenet_prompts[i % len(imagenet_prompts)] for i in range(c.b)
@@ -244,7 +254,7 @@ def _optimize_flux(config, extractor, flux, run):
             images_grad = flux._clamp_norm_vae(images_grad)
 
         feats = extractor(images_grad)
-        loss, comps = divergence_loss(feats, c.repulsion_w)
+        loss, comps = loss_func(feats, repulsion_weight=c.repulsion_w)
         loss.backward()
 
         all_params = [t for g in param_groups for t in g["params"]]

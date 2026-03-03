@@ -34,7 +34,7 @@ def _extract_contrastive_training_config(config, run=None):
     )
 
 
-@hydra.main(config_path="configs", config_name="config")
+@hydra.main(config_path="configs", config_name="default", version_base=None)
 def main(config):
     images_dir = config.data.images_dir
     out_dir = Path(config.output.dir)
@@ -46,10 +46,10 @@ def main(config):
 
     run = None
 
-    extractor = build_extractor(config)
-    generator = build_generator(config)
+    extractor = build_extractor(config.extractor)
+    generator = build_generator(config.mode)
 
-    images, cross_eval = optimize_images(config, extractor, run=run, generato=generator)
+    images, cross_eval = optimize_images(config, extractor, run=run, generator=generator)
     del extractor, generator
     torch.cuda.empty_cache()
 
@@ -65,8 +65,9 @@ def main(config):
         images_dir, 
         config.retrieval.topk,
         config.retrieval.batch_size,
-        num_workers=config.data.num_workers,
         output_dir=out_dir
     )
 
     
+if __name__ == "__main__":
+    main()
