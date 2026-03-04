@@ -15,8 +15,8 @@ optimization:
   lr_min_ratio: 0.1
 
   repulsion_weight: 0.1
-  log_every: 50
-  save_every: 100
+  log_every: 5
+  save_every: 50
 
 output:
   dir: "outputs/"
@@ -40,5 +40,5 @@ contrastive:
   warmup_epochs: 3
 
 retrieval:
-  topk: 50
+  topk: 200
   batch_size: 256

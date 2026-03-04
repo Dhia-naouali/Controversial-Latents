@@ -1,5 +1,5 @@
 import os
-import sys
+import wandb
 from pathlib import Path
 
 import hydra 
@@ -46,7 +46,10 @@ def main(config):
     OmegaConf.save(config, config_save_path)
     print(OmegaConf.to_yaml(config, resolve=True))
 
-    run = None
+    run = wandb.init(
+        project="controversial-latents",
+        config=OmegaConf.to_container(config, resolve=True, throw_on_missing=False)
+    )
 
     extractor = build_extractor(config.extractor)
     generator = build_generator(config.mode)
