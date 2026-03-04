@@ -33,6 +33,7 @@ def train_contrastive(
 ):
     pos_dataset = PositiveImagesDataset(optimized_images)
     
+    print(images_dir)
     images_paths = (
         glob.glob(f"{images_dir}/*.jpg") + 
         glob.glob(f"{images_dir}/*.JPEG") + 

@@ -47,11 +47,6 @@ class Backbone(nn.Module):
         self._backbone(x)
         return F.normalize(self._feats, dim=1)
     
-    def __del__(self):
-        if hasattr(self, "_hook_handle"):
-            self._hook_handle.remove()
-            super().__del__()
-
 
 class Head(nn.Module):
     def __init__(self, in_dim, hidden_dim=512, proj_dim=128):
@@ -61,7 +56,7 @@ class Head(nn.Module):
             nn.LayerNorm(hidden_dim),
             nn.GELU(),
             nn.Linear(hidden_dim, proj_dim, bias=False),
-            nn.LayerNorm(proj_dim, affine=False)
+            nn.LayerNorm(proj_dim, elementwise_affine=False)
         )
 
     def forward(self, x):

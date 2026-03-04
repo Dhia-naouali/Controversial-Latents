@@ -51,8 +51,12 @@ def embed_optimized_images(
 
 def cosine_topk(query, gallery, k=2, method="max"):
     assert method in ["max", "mean"], f"topk similarity selected using mean or max got {method}"
-    sims = (gallery @ query.T).mean(dim=1)
-    sims = sims.max(dim=1) if method == "max" else sims.mean(dim=1)
+    if query.ndim == 1:
+        sims = gallery @ query
+    else:
+        sims = gallery @ query.T
+        sims = sims.max(dim=1).values if method == "max" else sims.mean(dim=1)
+
     _, ids = sims.topk(min(k, gallery.size(0)))
     return ids
 
@@ -87,7 +91,7 @@ def retrieve(
 
     union_ids = torch.cat([meanq_ids, allq_ids]).unique()
     union_sims = (natural_embeds[union_ids] @ query_matrix.T).mean(dim=1)
-    rerank_order = union_sims.argsort()[::-1]
+    rerank_order = union_sims.argsort(descending=True)
 
     retrieved_ids = union_ids[rerank_order[:topk]].tolist()
     retrieved_paths = [str(all_paths[i]) for i in retrieved_ids]

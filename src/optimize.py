@@ -214,13 +214,13 @@ def _opitmizer_pixels_kl(config, extractor, run):
 def _optimize_flux(config, extractor, flux, run):
     name = "flux"
     c = _extract_config_for_optim(config, name)
-    weights = {
-        m.name: m.weight for m in config.extractor.members
-    } if hasattr(config.extractor.members[0], "weight") else None
 
     flux_config = config.mode.flux
     print(config.extractor.name)
     if config.extractor.name == "ensemble":
+        weights = {
+            m.name: m.weight for m in config.extractor.members
+        } if hasattr(config.extractor.members[0], "weight") else None
         loss_func = partial(ensemble_divergence_loss, weights=weights)
     else: 
         loss_func = divergence_loss

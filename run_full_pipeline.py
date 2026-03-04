@@ -19,7 +19,7 @@ from src import (
 def _extract_contrastive_training_config(config, run=None):
     images_dir = config.data.images_dir
     output_dir = config.output.dir
-    config = config.contrastive,
+    config = config.contrastive
 
     return dict(
         images_dir=images_dir,
@@ -32,7 +32,6 @@ def _extract_contrastive_training_config(config, run=None):
         wd=config.wd,
         temperature=config.temperature,
         neg_ratio=config.neg_ratio,
-        num_workers=config.data.get("num_workers", os.cpu_count() // 2),
         run=run
     )
 
@@ -58,7 +57,7 @@ def main(config):
 
     
     contrastive_config = _extract_contrastive_training_config(config, run=run)
-    model, _ = train_contrastive(
+    model = train_contrastive(
         images, **contrastive_config
     )
 

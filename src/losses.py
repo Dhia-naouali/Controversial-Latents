@@ -60,7 +60,7 @@ def annealed_ce_loss(logits, targets, step, total_steps, anneal_frac=.3, initial
 
 
 def nt_xent_loss(z1, z2, temp=7e-2):
-    N = z.shape[0]
+    N = z1.shape[0]
     z = F.normalize(
         torch.cat([z1, z2], dim=0),
         dim=1
