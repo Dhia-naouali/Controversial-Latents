@@ -17,10 +17,13 @@ from src import (
 
 
 def _extract_contrastive_training_config(config, run=None):
+    images_dir = config.data.images_dir
+    output_dir = config.output.dir
+    config = config.contrastive,
+
     return dict(
-        images_dir=config.data.images_dir,
-        output_dir=config.output.dir,
-        config=config.contrastive,
+        images_dir=images_dir,
+        output_dir=output_dir,
         proj_dim=config.proj_dim,
         hidden_dim=config.hidden_dim,
         epochs=config.epochs,
