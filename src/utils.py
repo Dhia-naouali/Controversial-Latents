@@ -1,3 +1,4 @@
+import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 
@@ -72,11 +73,13 @@ def save_images(images, img_path, title=None):
     n_cols = 4
     n_rows = (n+3) // 4
 
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(16 * (n_rows//n_cols), 16))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_rows*8, n_cols*8))
     axes = axes.flatten()
 
     for i, axis in enumerate(axes):
-        axis.imshow(images[i])
+        img = images[i]
+        img = (img - img.min()) / (img.max() - img.min())
+        axis.imshow((img * 255).astype(np.uint8))
         axis.axis("off")
 
     if title is not None:
@@ -86,6 +89,3 @@ def save_images(images, img_path, title=None):
     Path(img_path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(img_path, dpi=300)
     plt.close(fig)    
-
-
-# temp_device_contex

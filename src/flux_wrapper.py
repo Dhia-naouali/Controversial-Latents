@@ -161,9 +161,9 @@ class FluxWrapper(nn.Module):
         with torch.no_grad(), torch.amp.autocast(device_type="cuda", dtype=torch.bfloat16):
             images = self.vae.decode(latents_sc, return_dict=False)[0]
 
-        images = (images.clamp(-1., 1.) + 1) / 2.
-        images = (images - self.means) / self.stds
-        return images, latents_ste
+        # print(images.dtype, images.min(), images.max())
+        # print(self.means.dtype, self.means.min(), self.means.max())
+        return images.float(), latents_ste
 
 
     def clamp_latents(self, z):
@@ -171,7 +171,7 @@ class FluxWrapper(nn.Module):
             z.data.clamp_(-self.z_clamp, self.z_clamp)
 
     def _clamp_norm_vae(self, images):
-            images = (images.clamp(-1., 1.) + 1.) / 2.
+            images = (images.float().clamp(-1., 1.) + 1.) / 2.
             return (images - self.means) / self.stds
 
     @staticmethod

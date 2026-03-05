@@ -32,24 +32,14 @@ MODES2EXT = {
 }
 
 
-def run_mode(mode_name, extractor_name, group=None):
+def run_mode(mode_name, extractor_name, run=None):
     with hydra.initialize(config_path="configs"):
         config = hydra.compose(
             "default", overrides=[
                 f"mode={mode_name}",
                 f"extractor={extractor_name}",
-                f"output.dir=outputs/{mode_name}"
             ]
         )
-
-    # run = wandb.init(
-    #     project="controversial-latents", 
-    #     # group=run_group, 
-    #     name=mode_name, 
-    #     config=OmegaConf.to_container(config, resolve=True),
-    #     reinit=True
-    # )
-    run = None
 
     extractor = build_extractor(config.extractor)
     generator = build_generator(config.mode) if mode_name == "flux" else None
@@ -73,11 +63,17 @@ def main():
     parser = argparse.ArgumentParser()
     run_group = f"all_modes_{datetime.now()}"
 
+    run = wandb.init(
+        project="controversial-latents", 
+        name=mode_name, 
+    )
+
+
     Path(f"outputs/{run_group}").mkdir(parents=True, exist_ok=True)
     results = []
 
     for mode_name, extractor_name in MODES2EXT.items():
-        result = run_mode(mode_name, extractor_name, None)
+        result = run_mode(mode_name, extractor_name, run)
         results.append(result)
         
     # if len(results) > 1:

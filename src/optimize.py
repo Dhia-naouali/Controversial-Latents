@@ -28,7 +28,7 @@ STATS = (
 
 def unnormalize(images):
     m, s = STATS
-    return (images.cuda() * s + m).clamp(0., 1.)
+    return (images.cuda().float() * s + m).clamp(0., 1.)
 
 def _pixel_bounds():
     mean, std = STATS
@@ -140,7 +140,7 @@ def _optimize_pixels_ensemble(config, extractor, run):
 
 
 def _optimize_pixels_clip(config, extractor, run):
-    name = "picels_clip"
+    name = "pixels_clip"
     c = _extract_config_for_optim(config, name)
     images = _noise_init(c.b, 3, c.h, c.w)
     low, high = _pixel_bounds()
@@ -216,7 +216,6 @@ def _optimize_flux(config, extractor, flux, run):
     c = _extract_config_for_optim(config, name)
 
     flux_config = config.mode.flux
-    print(config.extractor.name)
     if config.extractor.name == "ensemble":
         weights = {
             m.name: m.weight for m in config.extractor.members
