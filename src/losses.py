@@ -17,22 +17,79 @@ def divergence_loss(feats, repulsion_weight=5e-2):
         "repulsion": repulsion.item()
     }
 
-def ensemble_divergence_loss(feats_dict, weights=None, repulsion_weight=5e-2):
-    if weights is None:
-        w = 1. / len(feats_dict)
-        weights = {k: w for k in feats_dict}
 
-    total_loss = torch.tensor(0.).cuda()
-    components = {}
-    for name, feats in feats_dict.items():
-        loss, comps_ = divergence_loss(feats, repulsion_weight)
-        total_loss += loss * weights.get(name, 1. / len(feats_dict))
 
-        for k, v in comps_.items():
-            components[f"{name}_{k}"] = v
+def linear_cka(x1, x2):
+    x1 = x1 - x1.mean(dim=0, keepdim=True)
+    x2 = x2 - x2.mean(dim=0, keepdim=True)
 
-    components["loss"] = total_loss.item()
-    return total_loss, components
+    K = x1 @ x1.T
+    L = x2 @ x2.T
+
+    hsic = (K * L).sum()
+
+    norm_x1 = torch.norm(K)
+    norm_x2 = torch.norm(L)
+
+    return hsic / (norm_x1 * norm_x2 + 1e-8)
+
+
+def ensemble_divergence_loss(feats_dict, intra_weight=0.5, weights=None, weight=None, repulsion_weight=None):
+    names = list(feats_dict.keys())
+    total_cka = 0.
+    pair_count = 0
+
+    feats_dict = {
+        k: F.normalize(v, dim=1)
+        for k, v in feats_dict.items()
+    }
+
+    # inter-models divergence
+    for i in range(len(names)):
+        for j in range(i+1, len(names)):
+            cka_val = linear_cka(
+                feats_dict[names[i]],
+                feats_dict[names[j]]
+            )
+            total_cka += cka_val
+            pair_count += 1
+
+    mean_cka = total_cka / max(1, pair_count)
+
+    # intra-model divergence
+    intra_loss = 0.
+    if intra_weight > 0:
+        for feats in feats_dict.values():
+            sim = feats @ feats.T
+            mask = ~torch.eye(sim.shape[0], dtype=torch.bool, device=sim.device)
+            intra_loss += (1. - sim[mask]).mean()
+        intra_loss /= len(feats_dict)
+
+    loss = mean_cka - intra_weight * intra_loss
+
+    return loss, {
+        "mean_cka": mean_cka.item(),
+        "intra_loss": intra_loss.item() if intra_weight > 0 else 0.,
+        "total_loss": loss.item()
+    }
+
+
+# def ensemble_divergence_loss(feats_dict, weights=None, repulsion_weight=5e-2):
+#     if weights is None:
+#         w = 1. / len(feats_dict)
+#         weights = {k: w for k in feats_dict}
+
+#     total_loss = torch.tensor(0.).cuda()
+#     components = {}
+#     for name, feats in feats_dict.items():
+#         loss, comps_ = divergence_loss(feats, repulsion_weight)
+#         total_loss += loss * weights.get(name, 1. / len(feats_dict))
+
+#         for k, v in comps_.items():
+#             components[f"{name}_{k}"] = v
+
+#     components["loss"] = total_loss.item()
+#     return total_loss, components
 
 def kl_divergence_loss(logits):
     probs = F.softmax(logits, dim=1)
