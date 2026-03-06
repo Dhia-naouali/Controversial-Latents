@@ -311,6 +311,11 @@ def optimize_images(config, extractor, run=None, generator=None):
     cross_eval = {}
     if config.cross_eval.enabled:
         cross_eval = cross_evaluate(images)
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"*20)
+        print(type(cross_eval))
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"*20)
+        print(cross_eval)
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"*20)
         # display(cross_eval.round(4))
         # cross_eval.to_csv(index=False)
     
