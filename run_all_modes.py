@@ -1,21 +1,18 @@
 import os
-import sys
-import json
 import argparse
-import pandas as pd
 from pathlib import Path
 from datetime import datetime
 
 import torch
 import hydra
-from omegaconf import OmegaConf
-
 
 import wandb
 from src import (
     build_extractor, 
     build_generator,
-    optimize_images
+    optimize_images,
+    save_heatmap,
+    run_cross_eval
 )
 
 from huggingface_hub import login
@@ -53,19 +50,19 @@ def run_mode(mode_name, extractor_name, run=None):
 
     return {
         "mode": mode_name, "images": images, "cross_eval": cross_eval
-    }
+    }, config
+
 
 def cross_eval_matrix(_):
     return {}
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    # parser = argparse.ArgumentParser()
     run_group = f"all_modes_{datetime.now()}"
 
     run = wandb.init(
         project="controversial-latents", 
-        name=mode_name, 
     )
 
 
@@ -73,17 +70,14 @@ def main():
     results = []
 
     for mode_name, extractor_name in MODES2EXT.items():
-        result = run_mode(mode_name, extractor_name, run)
+        result, config = run_mode(mode_name, extractor_name, run)
         results.append(result)
-        
-    # if len(results) > 1:
-    #     val_matrix = cross_eval_matrix(results)
-    #     df = pd.DataFrame(val_matrix).T
-    #     df = df.round(4)
-    #     print(df)
-        
-        # for mode_name, extractor_score in val_matrix.items():
 
+    if len(results) > 1:
+        df = run_cross_eval({r["mode"]: r["images"] for r in results})
+        print(df)
+        if config.output.dir:
+            save_heatmap(df, config.output.dir)
 
 
 if __name__ == "__main__":

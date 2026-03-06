@@ -58,6 +58,7 @@ def ensemble_divergence_loss(feats_dict, intra_weight=0.5, weights=None, weight=
 
     # intra-model divergence
     intra_loss = 0.
+    intra_weight = 0.1
     if intra_weight > 0:
         for feats in feats_dict.values():
             sim = feats @ feats.T
@@ -73,23 +74,6 @@ def ensemble_divergence_loss(feats_dict, intra_weight=0.5, weights=None, weight=
         "total_loss": loss.item()
     }
 
-
-# def ensemble_divergence_loss(feats_dict, weights=None, repulsion_weight=5e-2):
-#     if weights is None:
-#         w = 1. / len(feats_dict)
-#         weights = {k: w for k in feats_dict}
-
-#     total_loss = torch.tensor(0.).cuda()
-#     components = {}
-#     for name, feats in feats_dict.items():
-#         loss, comps_ = divergence_loss(feats, repulsion_weight)
-#         total_loss += loss * weights.get(name, 1. / len(feats_dict))
-
-#         for k, v in comps_.items():
-#             components[f"{name}_{k}"] = v
-
-#     components["loss"] = total_loss.item()
-#     return total_loss, components
 
 def kl_divergence_loss(logits):
     probs = F.softmax(logits, dim=1)

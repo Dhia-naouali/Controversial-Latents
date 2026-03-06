@@ -1,4 +1,5 @@
 import numpy as np
+import seaborn as sns
 from pathlib import Path
 import matplotlib.pyplot as plt
 
@@ -89,3 +90,22 @@ def save_images(images, img_path, title=None):
     Path(img_path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(img_path, dpi=300)
     plt.close(fig)    
+
+
+def save_heatmap(df, out_path):
+    plt.figure(figsize=(6,5))
+
+    sns.heatmap(
+        df,
+        annot=True,
+        fmt=".3f",
+        cmap="magma",
+        square=True,
+    )
+
+    plt.title("inter-Mode CKA")
+    plt.xlabel("Mode")
+    plt.ylabel("Mode")
+
+    plt.tight_layout()
+    plt.savefig(Path(out_path) / "inter-models-cka.png", dpi=300)

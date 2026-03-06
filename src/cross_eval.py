@@ -1,39 +1,51 @@
-from pathlib import Path
-
 import torch
+import pandas as pd
 import torch.nn.functional as F
-import numpy as np
 
 from .extractors import build_all_extractors
-from .losses import compute_mpcd
+from .losses import linear_cka
 
-def run_cross_eval(
-    image_sets,
-    run=None,
-    save_path=None
-):
+
+def run_cross_eval(image_sets, run=None):
     extractors = build_all_extractors()
-    results = {}
+    modes = list(image_sets.keys())
 
-    for mode_name, images in image_sets.items():
-        results[mode_name] = {}
-        row_vals = []
+    extractor_matrices = {}
 
-        for extractor_name, extractor in extractors.items():
-            with torch.no_grad():
-                feats = extractor(images.cuda())
+    for extractor_name, extractor in extractors.items():
+        extractor.eval()
+
+        feats_per_mode = {}
+
+        with torch.no_grad():
+            for mode in modes:
+                images = image_sets[mode].cuda()
+
+                feats = extractor(images)
+
                 if extractor_name == "classifier":
                     feats = F.softmax(feats.float(), dim=1)
-                mpcd = compute_mpcd(feats)
-            
-            results[mode_name][extractor_name] = mpcd
-            row_vals.append(mpcd)
 
-            # if run is not None:
-            #     run.log()
+                feats = F.normalize(feats, dim=1)
+                feats_per_mode[mode] = feats
 
-    # if run is not None:
-    # log results matrix
+        matrix = torch.zeros(len(modes), len(modes))
 
-    if save_path is not None:
-        _save_heatmap(results, save_path)
+        for i, m1 in enumerate(modes):
+            for j, m2 in enumerate(modes):
+                matrix[i, j] = linear_cka(
+                    feats_per_mode[m1],
+                    feats_per_mode[m2]
+                )
+
+        extractor_matrices[extractor_name] = matrix.cpu()
+
+    avg_matrix = torch.stack(list(extractor_matrices.values())).mean(0)
+    df = pd.DataFrame(
+        avg_matrix.numpy(),
+        index=modes,
+        columns=modes
+    ).round(4)
+
+    return df
+    

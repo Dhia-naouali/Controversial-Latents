@@ -1,5 +1,4 @@
 import os
-import wandb
 from pathlib import Path
 
 import hydra 
@@ -17,13 +16,10 @@ from src import (
 
 
 def _extract_contrastive_training_config(config, run=None):
-    images_dir = config.data.images_dir
-    output_dir = config.output.dir
-    config = config.contrastive
-
     return dict(
-        images_dir=images_dir,
-        output_dir=output_dir,
+        images_dir=config.data.images_dir,
+        output_dir=config.output.dir,
+        config=config.contrastive,
         proj_dim=config.proj_dim,
         hidden_dim=config.hidden_dim,
         epochs=config.epochs,
@@ -32,11 +28,12 @@ def _extract_contrastive_training_config(config, run=None):
         wd=config.wd,
         temperature=config.temperature,
         neg_ratio=config.neg_ratio,
+        num_workers=config.data.get("num_workers", os.cpu_count() // 2),
         run=run
     )
 
 
-@hydra.main(config_path="configs", config_name="default", version_base=None)
+@hydra.main(config_path="configs", config_name="config"):
 def main(config):
     images_dir = config.data.images_dir
     out_dir = Path(config.output.dir)
@@ -46,25 +43,18 @@ def main(config):
     OmegaConf.save(config, config_save_path)
     print(OmegaConf.to_yaml(config, resolve=True))
 
-    run = wandb.init(
-        project="controversial-latents",
-        config=OmegaConf.to_container(config, resolve=True, throw_on_missing=False)
-    )
+    run = None
 
-    extractor = build_extractor(config.extractor)
-    generator = build_generator(config.mode)
+    extractor = build_extractor(config)
+    generator = build_generator(config)
 
-    images, cross_eval = optimize_images(config, extractor, run=run, generator=generator)
-    print(type(cross_eval))
-    print(cross_eval)
-    if isinstance(cross_eval, dict):
-        print({k: v.shape if isinstance(v, torch.Tensor) else v for k, v in cross_eval.items()})
+    images, cross_eval = optimize_images(config, extractor, run=run, generato=generator)
     del extractor, generator
     torch.cuda.empty_cache()
 
     
     contrastive_config = _extract_contrastive_training_config(config, run=run)
-    model = train_contrastive(
+    model, _ = train_contrastive(
         images, **contrastive_config
     )
 
@@ -74,9 +64,7 @@ def main(config):
         images_dir, 
         config.retrieval.topk,
         config.retrieval.batch_size,
+        num_workers=config.data.num_workers,
         output_dir=out_dir
     )
 
-    
-if __name__ == "__main__":
-    main()
