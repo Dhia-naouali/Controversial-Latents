@@ -85,11 +85,12 @@ def retrieve(
     )
 
     # mean query
-    meanq_ids = cosine_topk(query_centroids, natural_embeds, topk, method=top_sim_method)
+    # meanq_ids = cosine_topk(query_centroids, natural_embeds, topk, method=top_sim_method)
     # all queries
     allq_ids = cosine_topk(query_matrix, natural_embeds, topk, method=top_sim_method)
 
-    union_ids = torch.cat([meanq_ids, allq_ids]).unique()
+    # union_ids = torch.cat([meanq_ids, allq_ids]).unique()
+    union_ids = allq_ids
     union_sims = (natural_embeds[union_ids] @ query_matrix.T).mean(dim=1)
     rerank_order = union_sims.argsort(descending=True)
 
