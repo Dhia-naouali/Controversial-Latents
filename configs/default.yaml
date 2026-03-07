@@ -15,8 +15,8 @@ optimization:
   lr_min_ratio: 0.1
 
   repulsion_weight: 0.1
-  log_every: 5
-  save_every: 50
+  log_every: 1
+  save_every: 40
 
 output:
   dir: "outputs/"
@@ -27,17 +27,17 @@ cross_eval:
 
 
 contrastive:
-  backbone: "resnet50"
+  backbone: "dino"
   proj_dim: 128
   hidden_dim: 512
 
-  epochs: 8
+  epochs: 12
   batch_size: 64
   lr: 1e-3
-  wd: 1e-3
+  wd: 1e-2
   temperature: 0.07
   neg_ratio: 8
-  warmup_epochs: 3
+  warmup_epochs: 2
 
 retrieval:
   topk: 200

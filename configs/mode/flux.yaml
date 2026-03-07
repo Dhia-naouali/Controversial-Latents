@@ -18,7 +18,7 @@ flux:
   optimize_c: true
   optimize_z: true
   lr_c: 0.02
-  lr_z: 0.07
+  lr_z: 0.05
   z_clamp: 3.0
 
   decode_steps: 24
