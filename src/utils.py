@@ -74,7 +74,7 @@ def save_images(images, img_path, title=None):
     n_cols = 4
     n_rows = (n+3) // 4
 
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_rows*8, n_cols*8))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols*8, n_rows*8))
     axes = axes.flatten()
 
     for i, axis in enumerate(axes):
